@@ -1,5 +1,4 @@
-local G = {}
-GeoHash = G
+local GeoHash = {}
 
 --[[
 -- Private Attributes
@@ -114,7 +113,7 @@ end
 -- Public Methods
 ]]--
 
-function G.decode(hash)
+function GeoHash.decode(hash)
     local bin  = ''
     local long = ''
     local lat  = ''
@@ -135,7 +134,7 @@ function G.decode(hash)
     return _decode(lat, -90.0, 90.0), _decode(long, -180.0, 180.0)
 end
 
-function G.encode(lat, long)
+function GeoHash.encode(lat, long)
     -- Translate coordinates to binary string format
     local a = _encode(lat, -90.0, 90.0)
     local b = _encode(long, -180.0, 180.0)
@@ -145,6 +144,8 @@ function G.encode(lat, long)
     return _bin2hash(binstr)
 end
 
-function G.precision(p)
+function GeoHash.precision(p)
     _precision = p * 5
 end
+
+return GeoHash

@@ -1,4 +1,4 @@
-require("geohash")
+GeoHash = require("geohash")
 
 -- Default precision is 5
 GeoHash.precision(8)
