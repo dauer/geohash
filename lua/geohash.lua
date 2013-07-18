@@ -47,8 +47,9 @@ local _precision = 25
 local function _decode(coord, min, max)
     local mid = 0.0
     local val = 0.0
+    local c   = ''
     for i = 1, #coord do
-        local c = coord:sub(i, i)
+        c = coord:sub(i, i)
         if c == '1' then
             min = mid
             val = (mid + max) / 2
@@ -117,14 +118,15 @@ function GeoHash.decode(hash)
     local bin  = ''
     local long = ''
     local lat  = ''
+    local c    = ''
     -- Convert hash to binary string
     for i = 1, #hash do
-        local c = hash:sub(i, i)
+        c = hash:sub(i, i)
         bin = bin .. _map[c]
     end
     -- Split binary string into latitude and longitude parts
     for i = 1, #bin do
-        local c = bin:sub(i, i)
+        c = bin:sub(i, i)
         if i % 2 == 0 then
             lat = lat .. c
         else
