@@ -101,7 +101,7 @@ local function _swap(tbl)
     return table
 end
 
-local function _bin2hash(bstr)
+local function _translate(bstr)
     local hash = ''
     local t = _swap(_map)
     for i = 1, #bstr, 5 do
@@ -143,7 +143,7 @@ function GeoHash.encode(lat, long)
     -- Merge the two binary string
     local binstr = _merge(a, b)
     -- Calculate GeoHash for binary string
-    return _bin2hash(binstr)
+    return _translate(binstr)
 end
 
 function GeoHash.precision(p)
