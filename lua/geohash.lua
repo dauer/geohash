@@ -115,11 +115,14 @@ local function _translate(bstr)
 end
 
 local function _decimals(lat, long)
-     local d1 = tostring(string.match(tostring(lat), "%d+.(%d+)"))
-     local d2 = tostring(string.match(tostring(long), "%d+.(%d+)"))
+     local d1 = tostring(string.match(tostring(lat), "%d+.(%d+)") or '')
+     local d2 = tostring(string.match(tostring(long), "%d+.(%d+)") or '')
      local ret = #d2
      if #d1 > #d2 then
          ret = #d1
+     elseif #d1 == 0 and #d2 == 0 then
+         -- if no digits default to 2
+         ret = 2
      end
      return ret
 end
