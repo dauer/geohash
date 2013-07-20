@@ -61,4 +61,18 @@ function Testing:testPrecision()
     assertEquals(h3, 'u3butn')
 end
 
+function Testing:testNoDecimals()
+    local GeoHash = require "../geohash.lua"
+    -- Near Vordingborg, Denmark
+    local h1 = GeoHash.encode(55, 12)
+    assertEquals(h1, 'u3b8')
+end
+
+function Testing:testEquator()
+    local GeoHash = require "../geohash.lua"
+    -- Equator
+    local h1 = GeoHash.encode(0, 0)
+    assertEquals(h1, 's000')
+end
+
 LuaUnit:run()
