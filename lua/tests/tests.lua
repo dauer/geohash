@@ -1,11 +1,11 @@
-package.path = package.path .. ";../geohash.lua"
+package.path = package.path .. ";../lib/geohash.lua"
 
 require "luaunit"
 
 Testing = {}
 
 function Testing:testDecode()
-    local GeoHash = require "../geohash.lua"
+    local GeoHash = require "geohash.lua"
     -- Copenhagen, Denmark
     local x1, y1 = GeoHash.decode('u3butn2urfrd')
     assertEquals(x1, 55.669840)
@@ -29,7 +29,7 @@ function Testing:testDecode()
 end
 
 function Testing:testEncode()
-    local GeoHash = require "../geohash.lua"
+    local GeoHash = require "geohash.lua"
     -- Copenhagen, Denmark
     local h1 = GeoHash.encode(55.669840, 12.525787)
     assertEquals(h1, 'u3butn2urfrd')
@@ -48,7 +48,7 @@ function Testing:testEncode()
 end
 
 function Testing:testPrecision()
-    local GeoHash = require "../geohash.lua"
+    local GeoHash = require "geohash.lua"
     -- Copenhagen, Denmark
     local h1 = GeoHash.encode(55.669840, 12.525787)
     assertEquals(h1, 'u3butn2urfrd')
@@ -62,14 +62,14 @@ function Testing:testPrecision()
 end
 
 function Testing:testNoDecimals()
-    local GeoHash = require "../geohash.lua"
+    local GeoHash = require "geohash.lua"
     -- Near Vordingborg, Denmark
     local h1 = GeoHash.encode(55, 12)
     assertEquals(h1, 'u3b8')
 end
 
 function Testing:testEquator()
-    local GeoHash = require "../geohash.lua"
+    local GeoHash = require "geohash.lua"
     -- Equator
     local h1 = GeoHash.encode(0, 0)
     assertEquals(h1, 's000')

@@ -1,4 +1,4 @@
-GeoHash = require("geohash")
+GeoHash = require("lib/geohash")
 
 -- Default precision is 5
 GeoHash.precision(8)
