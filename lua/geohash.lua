@@ -38,7 +38,8 @@ local _map = {}
       _map['y'] = '11110'
       _map['z'] = '11111'
 
-local _precision = 25
+local _precision = nil
+local _digits    = 0
 
 --[[
 -- Private Methods
@@ -60,6 +61,8 @@ local function _decode(coord, min, max)
             mid = val
         end
     end
+    -- We want number of decimals according to hash length
+    val = tonumber(string.format("%.".. (#coord / 5) .. "f", val))
     return val
 end
 
@@ -67,8 +70,9 @@ local function _encode(coord, min, max)
     local mid =   0.0
     local x   =   0.0
     local y   =   0.0
+    local p   = ((_precision or _digits) * 5)
     local result = ''
-    for i = 1, _precision do
+    for i = 1, p do
         if coord <= max and coord >= mid then
             result = result .. '1'
             x = mid
@@ -110,6 +114,16 @@ local function _translate(bstr)
     return hash
 end
 
+local function _decimals(lat, long)
+     local d1 = tostring(string.match(tostring(lat), "%d+.(%d+)"))
+     local d2 = tostring(string.match(tostring(long), "%d+.(%d+)"))
+     local ret = #d2
+     if #d1 > #d2 then
+         ret = #d1
+     end
+     return ret
+end
+
 --[[
 -- Public Methods
 ]]--
@@ -137,6 +151,8 @@ function GeoHash.decode(hash)
 end
 
 function GeoHash.encode(lat, long)
+    -- Find precision
+    _digits = _decimals(lat, long)
     -- Translate coordinates to binary string format
     local a = _encode(lat, -90.0, 90.0)
     local b = _encode(long, -180.0, 180.0)
@@ -147,7 +163,7 @@ function GeoHash.encode(lat, long)
 end
 
 function GeoHash.precision(p)
-    _precision = p * 5
+    _precision = p
 end
 
 return GeoHash
