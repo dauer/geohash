@@ -15,9 +15,3 @@ http://en.wikipedia.org/wiki/Geohash
 ## Documentation ##
 
 Have a look at the 'lua/example.lua' file to see how to use the library.
-
-## TODO ##
-
-Write some tests...
-
-Write more documentation...
