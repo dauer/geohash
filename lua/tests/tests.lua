@@ -75,4 +75,12 @@ function Testing:testEquator()
     assertEquals(h1, 's000')
 end
 
+function Testing:testInvalidHash()
+    local GeoHash = require "geohash.lua"
+    -- Attempt to decode invalid hash (invalid characters: 'a', 'l')
+    local x, y = GeoHash.decode("ezas4l2")
+    assertEquals(x, nil)
+    assertEquals(y, nil)
+end
+
 LuaUnit:run()

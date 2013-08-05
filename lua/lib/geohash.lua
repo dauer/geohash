@@ -139,7 +139,12 @@ function GeoHash.decode(hash)
     -- Convert hash to binary string
     for i = 1, #hash do
         c = hash:sub(i, i)
-        bin = bin .. _map[c]
+        if _map[c] ~= nil then
+            bin = bin .. _map[c]
+        else
+            -- Invalid hash character, return nil
+            return nil, nil
+        end
     end
     -- Split binary string into latitude and longitude parts
     for i = 1, #bin do
