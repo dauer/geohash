@@ -30,11 +30,11 @@ A: I think it is stable and ready for release, but since I am the only user, I'l
 
 I have added a Luarock Rockspec file to the project for easy installation:
 
-luarocks install geohash-0.9-1.rockspec
+    luarocks install geohash-0.9-1.rockspec
 
 And removal:
 
-luarocks remove geohash
+    luarocks remove geohash
 
 ## Documentation ##
 
