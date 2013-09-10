@@ -16,7 +16,8 @@ http://en.wikipedia.org/wiki/Geohash
 
 The current Geohash version is 0.9.
 
-Q: Why 0.9? 
+Q: Why 0.9?
+
 A: I think it is stable and ready for release, but since I am the only user, I'll wait to someone else has testet it before releasing 1.0...
 
 ## Requirements ##
