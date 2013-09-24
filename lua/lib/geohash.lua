@@ -48,10 +48,8 @@ local _digits    = 0
 local function _decode(coord, min, max)
     local mid = 0.0
     local val = 0.0
-    local c   = ''
     for i = 1, #coord do
-        c = coord:sub(i, i)
-        if c == '1' then
+        if coord:sub(i, i) == '1' then
             min = mid
             val = (mid + max) / 2
             mid = val
