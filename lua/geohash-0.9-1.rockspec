@@ -9,7 +9,7 @@ source = {
 description = {
    summary = "Lua library for encoding and decoding GeoHashes.",
    detailed = [[
-      A library written in Lua contaning methods for encoding and decoding of GeoHashes.
+      A library written in Lua containing methods for encoding and decoding of GeoHashes.
       For more info: http://geohash.org/
    ]],
    homepage = "https://github.com/dauer/geohash",
