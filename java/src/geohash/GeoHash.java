@@ -18,30 +18,32 @@ public class GeoHash {
 		for (byte i = 0; i < characters.length; i++)
 			map[characters[i]] = i;
 	}
+	/** number of bits per character */
+	static final int CHARACTER_BITS = 5;
 	
-	public static final double[] decode(String hash) {
+	public static final double[] decode(final String hash) {
+		return decode(hash.getBytes());
+	}
+	public static final double[] decode(final byte[] hash) {
 		double[] latLon = new double[2];
 		int lat = 0, lon = 0;//this gives us a bit length of 32 for each coordinate - ought to be sufficient
-		int latDigits = 0, lonDigits = 0;
 		boolean evenbit = true;
 		
 		//split hash into binary latitude and longitude parts
-		final byte[] h = convertHashToBinary(hash.getBytes());
+		final byte[] h = convertHashToBinary(hash);
 		for (byte b : h) {
-			//outrolled loop over each bit
+			//unrolled loop over each bit
 			if (evenbit) {
-				lon <<= 3; lon |= ((b & 0x10) >> 2); lon |= ((b & 0x04) >> 1); lon |= (b & 0x01);
-				lat <<= 2; lat |= ((b & 0x08) >> 2); lat |= ((b & 0x02) >> 1);
-				lonDigits += 3; latDigits += 2;
+				lon = extractEvenBits(lon, b);
+				lat = extractUnevenBits(lat, b);
 			} else {
-				lat <<= 3; lat |= ((b & 0x10) >> 2); lat |= ((b & 0x04) >> 1); lat |= (b & 0x01);
-				lon <<= 2; lon |= ((b & 0x08) >> 2); lon |= ((b & 0x02) >> 1);
-				latDigits += 3; lonDigits += 2; //TODO there must some mathematical way to calculate this on the length of input hash
+				lat = extractEvenBits(lat, b);
+				lon = extractUnevenBits(lon, b);
 			}
 			evenbit = !evenbit;
 		}
-		latLon[0] = decode(lat, -90.0, 90, latDigits);
-		latLon[1] = decode(lon, -180.0, 180, lonDigits);
+		latLon[0] = decode(lat, -90.0, 90, calculateLatitudeBits(h.length));
+		latLon[1] = decode(lon, -180.0, 180, calculateLongitudeBits(h.length));
 		
 		return latLon;
 	}
@@ -57,6 +59,20 @@ public class GeoHash {
 			l |= (byte)(0x1F & map[bytes[i]]);
 		}*/
 		return hash;
+	}
+	
+	static final int calculateLatitudeBits(final int quintets) {
+		return calculateBits(quintets, 2);
+	}
+	static final int calculateLongitudeBits(final int quintets) {
+		return calculateBits(quintets, 3);
+	}
+	/**
+	 * A mathematical way of calculating the number of bits from input length
+	 * (length / 2 * 5) + (length % 2 != 0 ? 3 : 0)
+	 */
+	private static final int calculateBits(final int quintets, final int unevenExtra) {
+		return (((quintets >> 1) * CHARACTER_BITS) + ((quintets & 0x1) * unevenExtra));
 	}
 	
 	static final double decode(final long coord, double min, double max, final int digits) {
@@ -76,16 +92,16 @@ public class GeoHash {
 		return v.setScale(digits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 	
-	static final byte extractEvenBits(byte b) {
-		byte e = 0;
-		e |= ((b & 0x10) >> 2); e |= ((b & 0x04) >> 1); e |= (b & 0x01);
-		return e;
+	static final int extractEvenBits(int value, final byte b) {
+		value <<= 3;
+		value |= ((b & 0x10) >> 2); value |= ((b & 0x04) >> 1); value |= (b & 0x01);
+		return value;
 	}
 
-	static final byte extractUnevenBits(byte b) {
-		byte u = 0;
-		u |= ((b & 0x08) >> 2); u |= ((b & 0x02) >> 1);
-		return u;
+	static final int extractUnevenBits(int value, final byte b) {
+		value <<= 2;
+		value |= ((b & 0x08) >> 2); value |= ((b & 0x02) >> 1);
+		return value;
 	}
 
 }

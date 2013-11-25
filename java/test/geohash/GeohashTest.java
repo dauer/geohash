@@ -51,13 +51,25 @@ public class GeohashTest {
 		//'Even' starts from the left of the binary representation with 0 as startindex
 		//00010110 = 0x16
 		//110 = 0x06
-		assertEquals(0x06, GeoHash.extractEvenBits((byte)0x16));
+		assertEquals(0x06, GeoHash.extractEvenBits(0,(byte)0x16));
+		//00001111 = 0xF
+		//011 = 3
+		assertEquals(0x03, GeoHash.extractEvenBits(0,(byte)0xF));
 	}
 	@Test
 	public void extractUnevenBits() {
 		//00010110 = 0x16
 		//01 = 0x01
-		assertEquals(0x01, GeoHash.extractUnevenBits((byte)0x16));
+		assertEquals(0x01, GeoHash.extractUnevenBits(0,(byte)0x16));
+		//00001111 = 0xF
+		//11 = 3
+		assertEquals(0x03, GeoHash.extractUnevenBits(0,(byte)0xF));
+	}
+	
+	@Test
+	public void numberOfBitsPerCoordinate() {
+		assertEquals(30, GeoHash.calculateLatitudeBits(12));
+		assertEquals(30, GeoHash.calculateLongitudeBits(12));
 	}
 	
 	@Test
@@ -69,9 +81,10 @@ public class GeohashTest {
 		assertCoordinates(GeoHash.decode("xn77513czbxu"), 35.690764, 139.704895);
 		assertCoordinates(GeoHash.decode("xn7751"), 35.692, 139.708);
 		assertCoordinates(GeoHash.decode("u4pruydqqvj"), 57.64911, 10.40744);
+		assertCoordinates(GeoHash.decode("u4pbbs8wmv7k"), 56.407657, 10.921348);
 		
 		
-		double[] coord = GeoHash.decode("u4pruydqqvj");
+		double[] coord = GeoHash.decode("u4pbbs8wmv7k");
 		System.out.println(coord[0] + "  " + coord[1]);
 	}
 	
