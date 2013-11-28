@@ -19,7 +19,11 @@ public class GeoHash {
 			map[characters[i]] = i;
 	}
 	/** number of bits per character */
-	static final int CHARACTER_BITS = 5;
+	private static final int CHARACTER_BITS = 5;
+	private	static final int MAX_BITS = 60;
+	private static final double[] LATITUDE_RANGE = {-90.0, 90.0};
+	private static final double[] LONGITUDE_RANGE = {-180.0, 180.0};
+	
 	
 	public static final double[] decode(final String hash) {
 		return decode(hash.getBytes());
@@ -75,9 +79,21 @@ public class GeoHash {
 		return (((quintets >> 1) * CHARACTER_BITS) + ((quintets & 0x1) * unevenExtra));
 	}
 	
-	static final double decode(final long coord, double min, double max, final int digits) {
+	static final int extractEvenBits(int value, final byte b) {
+		value <<= 3;
+		value |= ((b & 0x10) >> 2); value |= ((b & 0x04) >> 1); value |= (b & 0x01);
+		return value;
+	}
+
+	static final int extractUnevenBits(int value, final byte b) {
+		value <<= 2;
+		value |= ((b & 0x08) >> 2); value |= ((b & 0x02) >> 1);
+		return value;
+	}
+	
+	static final double decode(final long coord, double min, double max, final int bits) {
 		double val = 0.0;
-		int mask = 1 << digits;
+		int mask = 1 << bits;
 		while ((mask >>= 1) >= 1) {//while bits are left to be explored
 			if ((mask & coord) > 0) {//bit == 1
 				min = val;
@@ -89,19 +105,56 @@ public class GeoHash {
 		}
 		//some rounding might be needed
 		BigDecimal v = new BigDecimal(val);
-		return v.setScale(digits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return v.setScale(bits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 	
-	static final int extractEvenBits(int value, final byte b) {
-		value <<= 3;
-		value |= ((b & 0x10) >> 2); value |= ((b & 0x04) >> 1); value |= (b & 0x01);
+	/**
+	 * 
+	 * @param lat
+	 * @param lon
+	 * @param precision Geohash length [1-12]
+	 * @return
+	 */
+	public static final String encode(double lat, double lon, int precision) {
+		//latInfo = [0]lat,[1]min,[2]max,[3]mid
+		final double[] latInfo = {lat, LATITUDE_RANGE[0], LATITUDE_RANGE[1], 0.0};//TODO this could be made into an object data holder - and possibly even without loss of speed
+		final double[] lonInfo = {lon, LONGITUDE_RANGE[0], LONGITUDE_RANGE[1], 0.0};
+		long mask = 0x1l << Math.min(precision * CHARACTER_BITS, MAX_BITS);//precision cannot be more than 60 bits (the nearest multiple of 5 under 64 (the bits of a long));
+		long val = 0;
+		boolean even = true;
+		while ((mask >>= 1) > 0) {
+			if (even) {
+				//longitude
+				val = encode(val, lonInfo);
+			} else {
+				//latitude
+				val = encode(val, latInfo);
+			}
+			even = !even;
+		}
+		
+		return new String(translate(val, precision));
+	}
+	
+	static final long encode(long value, final double[] info) {
+		info[3] = (info[1] + info[2]) / 2;
+		if (info[0] >= info[3]) {
+			value <<= 1; value |= 0x1;//add one
+			info[1] = info[3];
+		} else {
+			value <<= 1;//add zero
+			info[2] = info[3];
+		}
 		return value;
 	}
-
-	static final int extractUnevenBits(int value, final byte b) {
-		value <<= 2;
-		value |= ((b & 0x08) >> 2); value |= ((b & 0x02) >> 1);
-		return value;
+	
+	static final byte[] translate(long binary, int length_of_hash) {
+		final byte[] h = new byte[ length_of_hash ];
+		while (length_of_hash > 0) {
+			h[--length_of_hash] = characters[(byte)(binary & 0x1F)];
+			binary >>= CHARACTER_BITS;
+		}
+		return h;
 	}
 
 }

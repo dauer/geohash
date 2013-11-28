@@ -2,6 +2,8 @@ package geohash;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -84,13 +86,58 @@ public class GeohashTest {
 		assertCoordinates(GeoHash.decode("u4pbbs8wmv7k"), 56.407657, 10.921348);
 		
 		
-		double[] coord = GeoHash.decode("u4pbbs8wmv7k");
+		double[] coord = GeoHash.decode("u3b8");
 		System.out.println(coord[0] + "  " + coord[1]);
+	}
+	
+	@Test
+	public void encodeLatitude() {
+//		System.out.println(GeoHash.encode(42.6, -90.0, 90.0, 12));
+		double[] info = {42.6, -90.0, 90.0, 0};
+		long value = 0;
+		for(int i = 0; i < 12; i++)
+			value = GeoHash.encode(value, info);
+		assertEquals(0xBC9,value);
+	}
+	
+	@Test
+	public void encodeLongitude() {
+//		assertEquals(0x0F80, GeoHash.encode(-5.6, -180.0, 180.0, 13));
+		double[] info = {-5.6, -180.0, 180.0, 0};
+		long value = 0;
+		for(int i = 0; i < 13; i++)
+			value = GeoHash.encode(value, info);
+		assertEquals(0x0F80,value);
+	}
+	
+	@Test
+	public void translate() {
+		//ezs42 should translate into 01101 11111 11000 00100 00010 = 0DFE082
+		assertArrayEquals(/*new byte[]{0x0D,0x1F,0x18,0x04,0x02}*/new byte[]{'e','z','s','4','2'}, GeoHash.translate(0x0DFE082, 5));
+	}
+	
+	@Test
+	public void encode() {
+//		assertEquals("u3butn2urfrd", GeoHash.encode(55.669840, 12.525787, 12));
+		assertHash("ezs42", 5);
+		assertHash("xn7751", 6);
+		assertHash("u3butn2urfrd", 12);
+		assertHash("k3vngx2pbh0r", 12);
+		assertHash("f244kwx00425", 12);
+		assertHash("xn77513czbxu", 12);
+		assertHash("u4pruydqqvj", 11);
+		assertHash("u4pbbs8wmv7k", 12);
+		System.out.println(GeoHash.encode(42.6, -5.6, 12));
 	}
 	
 	private void assertCoordinates(double[] coord, double lat, double lon) {
 		assertEquals(lat, coord[0], 0.0000005);
 		assertEquals(lon, coord[1], 0.0000005);
+	}
+	
+	private void assertHash(String hash, int precision) {
+		double[] decode = GeoHash.decode(hash);
+		assertEquals(hash,GeoHash.encode(decode[0], decode[1], precision));
 	}
 	
 }
