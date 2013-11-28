@@ -3,6 +3,7 @@ package geohash;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
+import java.util.Random;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -84,9 +85,9 @@ public class GeohashTest {
 		assertCoordinates(GeoHash.decode("xn7751"), 35.692, 139.708);
 		assertCoordinates(GeoHash.decode("u4pruydqqvj"), 57.64911, 10.40744);
 		assertCoordinates(GeoHash.decode("u4pbbs8wmv7k"), 56.407657, 10.921348);
+		assertCoordinates(GeoHash.decode("u1zpxuch99e5"),56.188983, 10.185768);
 		
-		
-		double[] coord = GeoHash.decode("u3b8");
+		double[] coord = GeoHash.decode("u1zpxuch99e5");
 		System.out.println(coord[0] + "  " + coord[1]);
 	}
 	
@@ -118,7 +119,6 @@ public class GeohashTest {
 	
 	@Test
 	public void encode() {
-//		assertEquals("u3butn2urfrd", GeoHash.encode(55.669840, 12.525787, 12));
 		assertHash("ezs42", 5);
 		assertHash("xn7751", 6);
 		assertHash("u3butn2urfrd", 12);
@@ -127,7 +127,23 @@ public class GeohashTest {
 		assertHash("xn77513czbxu", 12);
 		assertHash("u4pruydqqvj", 11);
 		assertHash("u4pbbs8wmv7k", 12);
-		System.out.println(GeoHash.encode(42.6, -5.6, 12));
+		assertEquals("u1zpxuch99e5",GeoHash.encode(56.188983, 10.185768, 12));
+	}
+	
+	@Test
+	public void timing() {
+		int size = 20000;
+		double[][] locations = new double[size][];
+		for (int i = 0; i < size; i++)
+			locations[i] = generateLocation();
+		
+		long time = System.currentTimeMillis();
+		for (double[] loc : locations) {
+			String hash = GeoHash.encode(loc[0], loc[1], (int)loc[2]);
+			double[] decode = GeoHash.decode(hash);
+			//assert loc == decode
+		}
+		System.out.println("Time: " + (System.currentTimeMillis() - time));
 	}
 	
 	private void assertCoordinates(double[] coord, double lat, double lon) {
@@ -138,6 +154,17 @@ public class GeohashTest {
 	private void assertHash(String hash, int precision) {
 		double[] decode = GeoHash.decode(hash);
 		assertEquals(hash,GeoHash.encode(decode[0], decode[1], precision));
+	}
+	
+	private double[] generateLocation() {
+		//generate random locations
+		//precision [5-12]
+		Random r = new Random(System.currentTimeMillis());
+		int precision = 5 + r.nextInt(7);
+		double lat = r.nextInt(180) - 90 + r.nextDouble();
+		double lon = r.nextInt(360) - 180 + r.nextDouble();
+//		System.out.println(lat + " " + lon + " " + precision);
+		return new double[]{lat, lon, precision};
 	}
 	
 }
