@@ -19,17 +19,24 @@ public class GeoHash {
 			map[characters[i]] = i;
 	}
 	/** number of bits per character */
-	private static final int CHARACTER_BITS = 5;
+	private static final int BITS_PER_CHARACTER = 5;
 	private	static final int MAX_BITS = 60;
+	private static final int MAX_HASH_LENGTH = MAX_BITS / BITS_PER_CHARACTER;//maximum precision
 	private static final double[] LATITUDE_RANGE = {-90.0, 90.0};
 	private static final double[] LONGITUDE_RANGE = {-180.0, 180.0};
 	
+	public final double lat, lon;
+	public final int precision;
+	private GeoHash(final double lat, final double lon, final int precision) {
+		this.lat = lat;
+		this.lon = lon;
+		this.precision = precision;
+	}
 	
-	public static final double[] decode(final String hash) {
+	public static final GeoHash decode(final String hash) {
 		return decode(hash.getBytes());
 	}
-	public static final double[] decode(final byte[] hash) {
-		double[] latLon = new double[2];
+	public static final GeoHash decode(final byte[] hash) {
 		int lat = 0, lon = 0;//this gives us a bit length of 32 for each coordinate - ought to be sufficient
 		boolean evenbit = true;
 		
@@ -46,10 +53,11 @@ public class GeoHash {
 			}
 			evenbit = !evenbit;
 		}
-		latLon[0] = decode(lat, -90.0, 90, calculateLatitudeBits(h.length));
-		latLon[1] = decode(lon, -180.0, 180, calculateLongitudeBits(h.length));
 		
-		return latLon;
+		return new GeoHash(
+				decode(lat, -90.0, 90, calculateLatitudeBits(h.length)), 	//lattitude
+				decode(lon, -180.0, 180, calculateLongitudeBits(h.length)),	//longitude
+				hash.length);
 	}
 	
 	static final byte[] convertHashToBinary(byte[] bytes) {
@@ -76,7 +84,7 @@ public class GeoHash {
 	 * (length / 2 * 5) + (length % 2 != 0 ? 3 : 0)
 	 */
 	private static final int calculateBits(final int quintets, final int unevenExtra) {
-		return (((quintets >> 1) * CHARACTER_BITS) + ((quintets & 0x1) * unevenExtra));
+		return (((quintets >> 1) * BITS_PER_CHARACTER) + ((quintets & 0x1) * unevenExtra));
 	}
 	
 	static final int extractEvenBits(int value, final byte b) {
@@ -91,9 +99,9 @@ public class GeoHash {
 		return value;
 	}
 	
-	static final double decode(final long coord, double min, double max, final int bits) {
+	static final double decode(final long coord, double min, double max, final int number_of_bits) {
 		double val = 0.0;
-		int mask = 1 << bits;
+		int mask = 1 << number_of_bits;
 		while ((mask >>= 1) >= 1) {//while bits are left to be explored
 			if ((mask & coord) > 0) {//bit == 1
 				min = val;
@@ -105,7 +113,7 @@ public class GeoHash {
 		}
 		//some rounding might be needed
 		BigDecimal v = new BigDecimal(val);
-		return v.setScale(bits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return v.setScale(number_of_bits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
 	}
 	
 	/**
@@ -119,7 +127,7 @@ public class GeoHash {
 		//latInfo = [0]lat,[1]min,[2]max,[3]mid
 		final double[] latInfo = {lat, LATITUDE_RANGE[0], LATITUDE_RANGE[1], 0.0};//TODO this could be made into an object data holder - and possibly even without loss of speed
 		final double[] lonInfo = {lon, LONGITUDE_RANGE[0], LONGITUDE_RANGE[1], 0.0};
-		long mask = 0x1l << Math.min(precision * CHARACTER_BITS, MAX_BITS);//precision cannot be more than 60 bits (the nearest multiple of 5 under 64 (the bits of a long));
+		long mask = 0x1l << Math.min(precision * BITS_PER_CHARACTER, MAX_BITS);//precision cannot be more than 60 bits (the nearest multiple of 5 under 64 (the bits of a long));
 		long val = 0;
 		boolean even = true;
 		while ((mask >>= 1) > 0) {
@@ -135,6 +143,9 @@ public class GeoHash {
 		
 		return new String(translate(val, precision));
 	}
+	public static final String encode(GeoHash coord) {
+		return encode(coord.lat, coord.lon, coord.precision);
+	}
 	
 	static final long encode(long value, final double[] info) {
 		info[3] = (info[1] + info[2]) / 2;
@@ -148,13 +159,18 @@ public class GeoHash {
 		return value;
 	}
 	
-	static final byte[] translate(long binary, int length_of_hash) {
+	static final byte[] translate(long value, int length_of_hash) {
 		final byte[] h = new byte[ length_of_hash ];
 		while (length_of_hash > 0) {
-			h[--length_of_hash] = characters[(byte)(binary & 0x1F)];
-			binary >>= CHARACTER_BITS;
+			h[--length_of_hash] = characters[(byte)(value & 0x1F)];
+			value >>= BITS_PER_CHARACTER;
 		}
 		return h;
 	}
-
+	
+	@Override
+	public String toString() {
+		return String.format("%f %f %d", this.lat, this.lon, 110111);//this.lat + " " + this.lon;
+	}
+	
 }

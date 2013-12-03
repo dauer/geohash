@@ -8,7 +8,7 @@ import java.util.Random;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class GeohashTest {
+public class GeoHashTest {
 	
 	/*Geohash hash;
 	@BeforeClass
@@ -87,8 +87,8 @@ public class GeohashTest {
 		assertCoordinates(GeoHash.decode("u4pbbs8wmv7k"), 56.407657, 10.921348);
 		assertCoordinates(GeoHash.decode("u1zpxuch99e5"),56.188983, 10.185768);
 		
-		double[] coord = GeoHash.decode("u1zpxuch99e5");
-		System.out.println(coord[0] + "  " + coord[1]);
+		GeoHash coord = GeoHash.decode("u1zpxuch99e5");
+		System.out.println(coord);
 	}
 	
 	@Test
@@ -119,14 +119,14 @@ public class GeohashTest {
 	
 	@Test
 	public void encode() {
-		assertHash("ezs42", 5);
-		assertHash("xn7751", 6);
-		assertHash("u3butn2urfrd", 12);
-		assertHash("k3vngx2pbh0r", 12);
-		assertHash("f244kwx00425", 12);
-		assertHash("xn77513czbxu", 12);
-		assertHash("u4pruydqqvj", 11);
-		assertHash("u4pbbs8wmv7k", 12);
+		assertHash("ezs42");
+		assertHash("xn7751");
+		assertHash("u3butn2urfrd");
+		assertHash("k3vngx2pbh0r");
+		assertHash("f244kwx00425");
+		assertHash("xn77513czbxu");
+		assertHash("u4pruydqqvj");
+		assertHash("u4pbbs8wmv7k");
 		assertEquals("u1zpxuch99e5",GeoHash.encode(56.188983, 10.185768, 12));
 	}
 	
@@ -140,20 +140,20 @@ public class GeohashTest {
 		long time = System.currentTimeMillis();
 		for (double[] loc : locations) {
 			String hash = GeoHash.encode(loc[0], loc[1], (int)loc[2]);
-			double[] decode = GeoHash.decode(hash);
+			GeoHash decode = GeoHash.decode(hash);
 			//assert loc == decode
 		}
-		System.out.println("Time: " + (System.currentTimeMillis() - time));
+		System.out.println("Time in milliseconds: " + (System.currentTimeMillis() - time));
 	}
 	
-	private void assertCoordinates(double[] coord, double lat, double lon) {
-		assertEquals(lat, coord[0], 0.0000005);
-		assertEquals(lon, coord[1], 0.0000005);
+	private void assertCoordinates(GeoHash coord, double lat, double lon) {
+		assertEquals(lat, coord.lat, 0.0000005);
+		assertEquals(lon, coord.lon, 0.0000005);
 	}
 	
-	private void assertHash(String hash, int precision) {
-		double[] decode = GeoHash.decode(hash);
-		assertEquals(hash,GeoHash.encode(decode[0], decode[1], precision));
+	private void assertHash(String hash) {
+		GeoHash decode = GeoHash.decode(hash);
+		assertEquals(hash,GeoHash.encode(decode));
 	}
 	
 	private double[] generateLocation() {
