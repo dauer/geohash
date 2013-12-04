@@ -149,8 +149,8 @@ public class GeoHashTest {
 	}
 	
 	private void assertCoordinates(GeoHash geohash, double lat, double lon) {
-		assertEquals(lat, geohash.lat.coord, 0.0000005);
-		assertEquals(lon, geohash.lon.coord, 0.0000005);
+		assertEquals(lat, geohash.latitude(), 0.0000005);
+		assertEquals(lon, geohash.longitude(), 0.0000005);
 	}
 	
 	private void assertHash(String hash) {
