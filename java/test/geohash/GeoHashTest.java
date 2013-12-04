@@ -34,8 +34,8 @@ public class GeoHashTest {
 	@Test
 	public void convertHash() {
 		//decoding the hash ezs42 should translate into 01101 11111 11000 00100 00010 = 0DFE082
-		assertArrayEquals(new byte[]{0x0D,0x1F,0x18,0x04,0x02}, GeoHash.convertHashToBinary("ezs42".getBytes()));
-		assertArrayEquals(/*0x3B439CA1*/new byte[]{0x1D, 0x14, 0x07, 0x07, 0x05, 0x01}, GeoHash.convertHashToBinary("xn7751".getBytes()));
+		assertArrayEquals(new byte[]{0x0D,0x1F,0x18,0x04,0x02}, GeoHash.convertHashToBinary("ezs42".getBytes()).binaryHash);
+		assertArrayEquals(/*0x3B439CA1*/new byte[]{0x1D, 0x14, 0x07, 0x07, 0x05, 0x01}, GeoHash.convertHashToBinary("xn7751".getBytes()).binaryHash);
 	}
 	
 	@Test
@@ -94,21 +94,23 @@ public class GeoHashTest {
 	@Test
 	public void encodeLatitude() {
 //		System.out.println(GeoHash.encode(42.6, -90.0, 90.0, 12));
-		double[] info = {42.6, -90.0, 90.0, 0};
-		long value = 0;
+//		double[] info = {42.6, -90.0, 90.0, 0};
+		GeoHash geohash = new GeoHash();
+		GeoHash.Coordinate info = new GeoHash.Coordinate(42.6, GeoHash.LATITUDE_RANGE);
 		for(int i = 0; i < 12; i++)
-			value = GeoHash.encode(value, info);
-		assertEquals(0xBC9,value);
+			GeoHash.encode(geohash, info);
+		assertEquals(0xBC9,geohash.bitValue);
 	}
 	
 	@Test
 	public void encodeLongitude() {
 //		assertEquals(0x0F80, GeoHash.encode(-5.6, -180.0, 180.0, 13));
-		double[] info = {-5.6, -180.0, 180.0, 0};
-		long value = 0;
+//		double[] info = {-5.6, -180.0, 180.0, 0};
+		GeoHash geohash = new GeoHash();
+		GeoHash.Coordinate info = new GeoHash.Coordinate(-5.6, GeoHash.LONGITUDE_RANGE);
 		for(int i = 0; i < 13; i++)
-			value = GeoHash.encode(value, info);
-		assertEquals(0x0F80,value);
+			GeoHash.encode(geohash, info);
+		assertEquals(0x0F80,geohash.bitValue);
 	}
 	
 	@Test
@@ -146,9 +148,9 @@ public class GeoHashTest {
 		System.out.println("Time in milliseconds: " + (System.currentTimeMillis() - time));
 	}
 	
-	private void assertCoordinates(GeoHash coord, double lat, double lon) {
-		assertEquals(lat, coord.lat, 0.0000005);
-		assertEquals(lon, coord.lon, 0.0000005);
+	private void assertCoordinates(GeoHash geohash, double lat, double lon) {
+		assertEquals(lat, geohash.lat.coord, 0.0000005);
+		assertEquals(lon, geohash.lon.coord, 0.0000005);
 	}
 	
 	private void assertHash(String hash) {
