@@ -74,7 +74,6 @@ public class GeoHash {
 		boolean evenbit = true;
 		
 		//split hash into binary latitude and longitude parts
-//		final byte[] h = translateHashToBinary(hash);
 		long binary = 0;
 		for (byte b : hash) {
 			b = (byte)(0x1F & map[b]);
@@ -100,19 +99,6 @@ public class GeoHash {
 						new GeoHash.Coordinate(0.0, LONGITUDE_RANGE, calculateLongitudeBits(hash.length))).coord,
 				binary,
 				hash);
-	}
-	
-	protected static final byte[] translateHashToBinary(byte[] bytes) {
-		final byte[] hash = new byte[bytes.length];
-		for (int i = 0; i < bytes.length; i++)
-			hash[i] = (byte)(0x1F & map[bytes[i]]);
-		
-		/*long l = (byte)(0x1F & map[bytes[0]]);
-		for (int i = 1; i < bytes.length; i++) {
-			l <<= BITS_PER_CHARACTER;
-			l |= (byte)(0x1F & map[bytes[i]]);
-		}*/
-		return hash;
 	}
 	
 	protected static final int calculateLatitudeBits(final int precision) {
