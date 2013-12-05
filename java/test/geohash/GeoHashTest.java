@@ -34,24 +34,21 @@ public class GeoHashTest {
 	@Test
 	public void convertHash() {
 		//decoding the hash ezs42 should translate into 01101 11111 11000 00100 00010 = 0DFE082
-		assertArrayEquals(new byte[]{0x0D,0x1F,0x18,0x04,0x02}, GeoHash.convertHashToBinary("ezs42".getBytes()).binaryValue);
-		assertArrayEquals(/*0x3B439CA1*/new byte[]{0x1D, 0x14, 0x07, 0x07, 0x05, 0x01}, GeoHash.convertHashToBinary("xn7751".getBytes()).binaryValue);
+		assertEquals(0x0DFE082, GeoHash.decode("ezs42").bitValue);//GeoHash.translateHashToBinary("ezs42".getBytes()));
+		assertEquals(0x3B439CA1, GeoHash.decode("xn7751").bitValue);//GeoHash.translateHashToBinary("xn7751".getBytes()));
 	}
 	
 	@Test
 	public void decodeLatitude() {
+		GeoHash.Coordinate coord = new GeoHash.Coordinate(0.0, GeoHash.LATITUDE_RANGE, 12);
 		//0xBC9 = 101111001001
-		//assertEquals(42.6,GeoHash.decode(0xBC9, -90.0, 90.0, 12), 0.0000005);
-		GeoHash.Coordinate coord = GeoHash.createLatCoordinate(0xBC9);
-		GeoHash.decode(coord, 12);
-		assertEquals(42.6, coord.coord, 0.0000005);
+		assertEquals(42.6,GeoHash.decodeCoordinate(0xBC9, coord).coord, 0.0000005);
 	}
 	@Test
 	public void decodeLongitude() {
+		GeoHash.Coordinate coord = new GeoHash.Coordinate(0.0, GeoHash.LONGITUDE_RANGE, 13);
 		//0111110000000 = 0x0F80
-		GeoHash.Coordinate coord = GeoHash.createLonCoordinate(0xF80);
-		GeoHash.decode(coord, 13);
-		assertEquals(-5.6, coord.coord, 0.000005);
+		assertEquals(-5.6, GeoHash.decodeCoordinate(0x0F80, coord).coord, 0.000005);
 	}
 	
 	@Test
@@ -59,27 +56,19 @@ public class GeoHashTest {
 		//'Even' starts from the left of the binary representation with 0 as startindex
 		//00010110 = 0x16
 		//110 = 0x06
-		GeoHash.Coordinate coord = GeoHash.createLonCoordinate();
-		GeoHash.extractEvenBits(coord,(byte)0x16);
-		assertEquals(0x06, coord.bitValue);
+		assertEquals(0x06, GeoHash.extractEvenBits(0,(byte)0x16));
 		//00001111 = 0xF
 		//011 = 3
-		coord = GeoHash.createLonCoordinate();
-		GeoHash.extractEvenBits(coord,(byte)0xF);
-		assertEquals(0x03, coord.bitValue);
+		assertEquals(0x03, GeoHash.extractEvenBits(0,(byte)0xF));
 	}
 	@Test
 	public void extractUnevenBits() {
 		//00010110 = 0x16
 		//01 = 0x01
-		GeoHash.Coordinate coord = GeoHash.createLatCoordinate();
-		GeoHash.extractUnevenBits(coord,(byte)0x16);
-		assertEquals(0x01, coord.bitValue);
+		assertEquals(0x01, GeoHash.extractUnevenBits(0,(byte)0x16));
 		//00001111 = 0xF
 		//11 = 3
-		coord = GeoHash.createLatCoordinate();
-		GeoHash.extractUnevenBits(coord,(byte)0xF);
-		assertEquals(0x03, coord.bitValue);
+		assertEquals(0x03, GeoHash.extractUnevenBits(0,(byte)0xF));
 	}
 	
 	@Test
@@ -108,28 +97,28 @@ public class GeoHashTest {
 	public void encodeLatitude() {
 //		System.out.println(GeoHash.encode(42.6, -90.0, 90.0, 12));
 //		double[] info = {42.6, -90.0, 90.0, 0};
-		GeoHash geohash = new GeoHash();
-		GeoHash.Coordinate info = new GeoHash.Coordinate(42.6, GeoHash.LATITUDE_RANGE);
+		GeoHash.Coordinate coord = new GeoHash.Coordinate(42.6, GeoHash.LATITUDE_RANGE, 12);
+		long value = 0;
 		for(int i = 0; i < 12; i++)
-			GeoHash.encode(geohash, info);
-		assertEquals(0xBC9,geohash.bitValue);
+			value = GeoHash.encode(value, coord);
+		assertEquals(0xBC9,value);
 	}
 	
 	@Test
 	public void encodeLongitude() {
 //		assertEquals(0x0F80, GeoHash.encode(-5.6, -180.0, 180.0, 13));
 //		double[] info = {-5.6, -180.0, 180.0, 0};
-		GeoHash geohash = new GeoHash();
-		GeoHash.Coordinate info = new GeoHash.Coordinate(-5.6, GeoHash.LONGITUDE_RANGE);
+		GeoHash.Coordinate coord = new GeoHash.Coordinate(-5.6, GeoHash.LONGITUDE_RANGE, 13);
+		long value = 0;
 		for(int i = 0; i < 13; i++)
-			GeoHash.encode(geohash, info);
-		assertEquals(0x0F80,geohash.bitValue);
+			value = GeoHash.encode(value, coord);
+		assertEquals(0x0F80,value);
 	}
 	
 	@Test
 	public void translate() {
 		//ezs42 should translate into 01101 11111 11000 00100 00010 = 0DFE082
-		assertArrayEquals(/*new byte[]{0x0D,0x1F,0x18,0x04,0x02}*/new byte[]{'e','z','s','4','2'}, GeoHash.translate(0x0DFE082, 5));
+		assertArrayEquals(/*new byte[]{0x0D,0x1F,0x18,0x04,0x02}*/new byte[]{'e','z','s','4','2'}, GeoHash.translateBinaryToHash(0x0DFE082, 5));
 	}
 	
 	@Test
@@ -142,7 +131,14 @@ public class GeoHashTest {
 		assertHash("xn77513czbxu");
 		assertHash("u4pruydqqvj");
 		assertHash("u4pbbs8wmv7k");
-		assertEquals("u1zpxuch99e5",GeoHash.encode(56.188983, 10.185768, 12).hash());
+		assertEquals("u1zpxuch99e5", GeoHash.encode(56.188983, 10.185768, 12).toHashString());
+	}
+	
+	@Test
+	public void correctStringRepresentation() {
+		assertEquals( "01010", GeoHash.binaryRepresentation(10, 1));
+		assertEquals( "0000110111", GeoHash.binaryRepresentation(55, 2));
+		assertEquals("110100000111111101011110111010010111000001001010010110100101", GeoHash.binaryRepresentation(938989452414723493L, 12));
 	}
 	
 	@Test
@@ -154,21 +150,22 @@ public class GeoHashTest {
 		
 		long time = System.currentTimeMillis();
 		for (double[] loc : locations) {
-			GeoHash geohash = GeoHash.encode(loc[0], loc[1], (int)loc[2]);
-			GeoHash decode = GeoHash.decode(geohash.hash);
+			GeoHash encoded = GeoHash.encode(loc[0], loc[1], (int)loc[2]);
+			GeoHash decoded = GeoHash.decode(encoded.hash);
+			assertTrue(encoded.equals(decoded));
 			//assert loc == decode
 		}
 		System.out.println("Time in milliseconds: " + (System.currentTimeMillis() - time));
 	}
 	
-	private void assertCoordinates(GeoHash geohash, double lat, double lon) {
-		assertEquals(lat, geohash.latitude(), 0.0000005);
-		assertEquals(lon, geohash.longitude(), 0.0000005);
+	private void assertCoordinates(GeoHash coord, double lat, double lon) {
+		assertEquals(lat, coord.lat, 0.0000005);
+		assertEquals(lon, coord.lon, 0.0000005);
 	}
 	
 	private void assertHash(String hash) {
 		GeoHash decode = GeoHash.decode(hash);
-		assertEquals(hash,GeoHash.encode(decode).hash());
+		assertEquals(hash, GeoHash.encode(decode.lat, decode.lon, decode.precision).toHashString());
 	}
 	
 	private double[] generateLocation() {

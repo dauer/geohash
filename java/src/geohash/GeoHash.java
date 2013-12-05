@@ -1,7 +1,16 @@
 package geohash;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 
+/**
+ * A factory class for creating and calculating geohash values.
+ * 
+ * Works for both encoding from coordinate to hash, and
+ * decoding from hash to coordinate
+ * 
+ * @author MTD [alvn@mtdc.dk]
+ */
 public class GeoHash {
 	
 	protected static final byte[] characters = {
@@ -15,123 +24,128 @@ public class GeoHash {
 		  's','t','u','v','w','x','y','z'};
 	protected static final byte[] map = new byte['z'+1];
 	static {
-		for (byte i = 0; i < characters.length; i++)
-			map[characters[i]] = i;
+		for (byte i = 0; i < characters.length; i++) map[characters[i]] = i;
 	}
 	/** number of bits per character */
-	protected static final int BITS_PER_CHARACTER = 5;
-	protected	static final int MAX_BITS = 60;
-	protected static final int MAX_HASH_LENGTH = MAX_BITS / BITS_PER_CHARACTER;//maximum precision
-	protected static final double[] LATITUDE_RANGE = {-90.0, 90.0};
-	protected static final double[] LONGITUDE_RANGE = {-180.0, 180.0};
+	protected static final int 		BITS_PER_CHARACTER = 5;
+	protected static final int 		MAX_BITS = 60;
+	protected static final double[]	LATITUDE_RANGE = {-90.0, 90.0};
+	protected static final double[]	LONGITUDE_RANGE = {-180.0, 180.0};
 	
-	protected Coordinate lat, lon;
-	protected int precision;
-	protected long bitValue;
-	protected byte[] binaryValue;
-	protected byte[] hash;
-	private GeoHash(final double lat, final double lon, final int precision) {
-		this.lat = new Coordinate(lat, LATITUDE_RANGE);
-		this.lon = new Coordinate(lon, LONGITUDE_RANGE);
-		this.precision = precision;
-	}
-	private GeoHash(final long bitValue, final byte[] binaryHash) {
+	public final double	lat, lon;
+	/**
+	 * The precision of the coordinate. Must be in the interval [1-12]
+	 */
+	public final int	precision;
+	/**
+	 * The bit representation of the (LAT,LON)-pair
+	 */
+	public final long	bitValue;
+	/**
+	 * The encoded representation of the coordinate
+	 */
+	public final byte[]	hash;
+	protected GeoHash(final double lat, final double lon, final long bitValue, final byte[] hash) {
+		this.lat = lat;
+		this.lon = lon;
+		this.precision = hash.length;
 		this.bitValue = bitValue;
-		this.binaryValue = binaryHash;
-		this.precision = binaryHash.length;
-		this.lat = new Coordinate(0, LATITUDE_RANGE);
-		this.lon = new Coordinate(0, LONGITUDE_RANGE);
+		this.hash = hash;
 	}
-	protected GeoHash() {
-		
-	}
-	public final double latitude() {
-		return lat.coord;
-	}
-	public final double longitude() {
-		return lon.coord;
-	}
-	public final int precision() {
-		return precision;
-	}
-	public final long bitValue() {
-		return bitValue;
-	}
-	public final String hash() {
+	
+	/**
+	 * @return The encoded geohash
+	 */
+	public final String toHashString() {
 		return new String(hash);
+	}
+	/**
+	 * @return The binary representation of the coordinate
+	 */
+	public final String toBinaryRepresentation() {
+		return new String(binaryRepresentation(bitValue, precision));
 	}
 	
 	public static final GeoHash decode(final String hash) {
 		return decode(hash.getBytes());
 	}
 	public static final GeoHash decode(final byte[] hash) {
+		int lat = 0, lon = 0;//this gives us a bit length of 32 for each coordinate - ought to be sufficient
 		boolean evenbit = true;
 		
 		//split hash into binary latitude and longitude parts
-		GeoHash geohash = convertHashToBinary(hash);
-		for (byte b : geohash.binaryValue) {
+//		final byte[] h = translateHashToBinary(hash);
+		long binary = 0;
+		for (byte b : hash) {
+			b = (byte)(0x1F & map[b]);
+			binary <<= BITS_PER_CHARACTER;
+			binary |= b;
 			//unrolled loop over each bit
 			if (evenbit) {
-				extractEvenBits(geohash.lon, b);
-				extractUnevenBits(geohash.lat, b);
+				lon = extractEvenBits(lon, b);
+				lat = extractUnevenBits(lat, b);
 			} else {
-				extractEvenBits(geohash.lat, b);
-				extractUnevenBits(geohash.lon, b);
+				lat = extractEvenBits(lat, b);
+				lon = extractUnevenBits(lon, b);
 			}
 			evenbit = !evenbit;
 		}
 		
-		geohash.hash = hash;
-		decode(geohash.lat, calculateLatitudeBits(hash.length));	//latitude
-		decode(geohash.lon, calculateLongitudeBits(hash.length));	//longitude
-		return geohash;
+		return new GeoHash(
+				decodeCoordinate(		//lattitude
+						lat, 
+						new GeoHash.Coordinate(0.0, LATITUDE_RANGE, calculateLatitudeBits(hash.length))).coord,
+				decodeCoordinate(		//longitude
+						lon, 
+						new GeoHash.Coordinate(0.0, LONGITUDE_RANGE, calculateLongitudeBits(hash.length))).coord,
+				binary,
+				hash);
 	}
 	
-	protected static final GeoHash convertHashToBinary(byte[] bytes) {
-		long l = (byte)(0x1F & map[bytes[0]]);
+	protected static final byte[] translateHashToBinary(byte[] bytes) {
 		final byte[] hash = new byte[bytes.length];
-		for (int i = 0; i < bytes.length; i++) {
+		for (int i = 0; i < bytes.length; i++)
 			hash[i] = (byte)(0x1F & map[bytes[i]]);
-			l <<= 5;
-			l |= (byte)(0x1F & map[bytes[i]]);
-		} 
 		
-		return new GeoHash(l, hash);
+		/*long l = (byte)(0x1F & map[bytes[0]]);
+		for (int i = 1; i < bytes.length; i++) {
+			l <<= BITS_PER_CHARACTER;
+			l |= (byte)(0x1F & map[bytes[i]]);
+		}*/
+		return hash;
 	}
 	
-	protected static final int calculateLatitudeBits(final int quintets) {
-		return calculateBits(quintets, 2);
+	protected static final int calculateLatitudeBits(final int precision) {
+		return calculateBits(precision, 2);
 	}
-	protected static final int calculateLongitudeBits(final int quintets) {
-		return calculateBits(quintets, 3);
+	protected static final int calculateLongitudeBits(final int precision) {
+		return calculateBits(precision, 3);
 	}
 	/**
 	 * A mathematical way of calculating the number of bits from input length
 	 * (length / 2 * 5) + (length % 2 != 0 ? 3 : 0)
 	 */
-	private static final int calculateBits(final int quintets, final int unevenExtra) {
-		return (((quintets >> 1) * BITS_PER_CHARACTER) + ((quintets & 0x1) * unevenExtra));
+	private static final int calculateBits(final int precision, final int unevenExtra) {
+		return (((precision >> 1) * BITS_PER_CHARACTER) + ((precision & 0x1) * unevenExtra));
 	}
 	
-	protected static final void extractEvenBits(final Coordinate coord, final byte b) {
-		long value = coord.bitValue;
+	protected static final int extractEvenBits(int value, final byte b) {
 		value <<= 3;
 		value |= ((b & 0x10) >> 2); value |= ((b & 0x04) >> 1); value |= (b & 0x01);
-		coord.bitValue = value;
+		return value;
 	}
 
-	protected static final void extractUnevenBits(final Coordinate coord, final byte b) {
-		long value = coord.bitValue;
+	protected static final int extractUnevenBits(int value, final byte b) {
 		value <<= 2;
 		value |= ((b & 0x08) >> 2); value |= ((b & 0x02) >> 1);
-		coord.bitValue = value;
+		return value;
 	}
 	
-	protected static final void decode(final Coordinate coord, final int number_of_bits) {
+	protected static final Coordinate decodeCoordinate(final long bitCoord, final Coordinate coord) {
 		double val = 0.0;
-		int mask = 1 << number_of_bits;
+		int mask = 1 << coord.bits;
 		while ((mask >>= 1) >= 1) {//while bits are left to be explored
-			if ((mask & coord.bitValue) > 0) {//bit == 1
+			if ((mask & bitCoord) > 0) {//bit == 1
 				coord.min = val;
 				val = (val + coord.max) / 2;
 			} else {//bit == 0
@@ -140,9 +154,8 @@ public class GeoHash {
 			}
 		}
 		//some rounding might be needed
-		BigDecimal v = new BigDecimal(val);
-//		return v.setScale(number_of_bits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
-		coord.coord = v.setScale(number_of_bits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
+		coord.coord = new BigDecimal(val).setScale(coord.bits / 5, BigDecimal.ROUND_HALF_UP).doubleValue();
+		return coord;
 	}
 	
 	/**
@@ -154,84 +167,79 @@ public class GeoHash {
 	 */
 	public static final GeoHash encode(double lat, double lon, int precision) {
 		if (precision < 1) precision = 1;
-		final GeoHash geohash = new GeoHash(lat, lon, precision);
-		long mask = 0x1l << Math.min(precision * BITS_PER_CHARACTER, MAX_BITS);//precision cannot be more than 60 bits (the nearest multiple of 5 under 64 (the bits of a long));
-		geohash.bitValue = 0;
+		
+		final Coordinate latInfo = new Coordinate(lat, LATITUDE_RANGE, calculateLatitudeBits(precision));
+		final Coordinate lonInfo = new Coordinate(lon, LONGITUDE_RANGE, calculateLongitudeBits(precision));
+		
+		long mask = 0x1l << Math.min(precision * BITS_PER_CHARACTER, MAX_BITS);//precision cannot be more than 60 bits (the nearest multiple of 5 under 64 (the bits of a long))
+		long bitValue = 0;
 		boolean even = true;
 		while ((mask >>= 1) > 0) {
 			if (even) {
 				//longitude
-				encode(geohash, geohash.lon);
+				bitValue = encode(bitValue, lonInfo);
 			} else {
 				//latitude
-				encode(geohash, geohash.lat);
+				bitValue = encode(bitValue, latInfo);
 			}
 			even = !even;
 		}
 		
-		geohash.hash = translate(geohash.bitValue, precision);
-		return geohash;//new String(translate(geohash.bitValue, precision));
-	}
-	public static final GeoHash encode(GeoHash geohash) {
-		return encode(geohash.lat.coord, geohash.lon.coord, geohash.precision);
+		return new GeoHash(lat, lon, bitValue, translateBinaryToHash(bitValue, precision));//new String(translateBinaryToHash(bitValue, precision));
 	}
 	
-	protected static final void encode(GeoHash geohash, final Coordinate info) {
+	protected static final long encode(long bitValue, final Coordinate info) {
 		info.mid = (info.min + info.max) / 2;
-		long value = geohash.bitValue;
 		if (info.coord >= info.mid) {
-			value <<= 1; value |= 0x1;//add one
+			bitValue <<= 1; bitValue |= 0x1;//add one
 			info.min = info.mid;
 		} else {
-			value <<= 1;//add zero
+			bitValue <<= 1;//add zero
 			info.max = info.mid;
 		}
-		geohash.bitValue = value;
+		return bitValue;
 	}
 	
-	protected static final byte[] translate(long value, int length_of_hash) {
-		final byte[] h = new byte[ length_of_hash ];
-		while (length_of_hash > 0) {
-			h[--length_of_hash] = characters[(byte)(value & 0x1F)];
+	protected static final byte[] translateBinaryToHash( long value, int precision) {
+		final byte[] h = new byte[ precision ];
+		while (precision > 0) {
+			h[--precision] = characters[(byte)(value & 0x1F)];
 			value >>= BITS_PER_CHARACTER;
 		}
 		return h;
 	}
 	
+	protected static final String binaryRepresentation(final long bitValue, final int precision) {
+		char[] rep = new char[Math.min(precision * BITS_PER_CHARACTER, MAX_BITS)];
+		int index = 0;
+		long mask = 0x1l << rep.length;
+		while ((mask >>= 1) >= 1) {//while bits are left to be explored
+			rep[index++] = ((mask & bitValue) > 0 ? '1' : '0');
+		}
+		return new String( rep );
+	}
+	
 	@Override
 	public String toString() {
-		return String.format("%f %f %d", this.lat.coord, this.lon.coord, this.bitValue);
+		//convert into a binary string representation
+		return String.format("%f %f %d %s", this.lat, this.lon, this.bitValue, binaryRepresentation(this.bitValue, this.precision));//this.lat + " " + this.lon;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (obj != null && obj instanceof GeoHash)
+			return Arrays.equals( ((GeoHash)obj).hash, this.hash );
+		return false;
 	}
 	
-	
-	//factory methods
-	protected static final Coordinate createLatCoordinate() {
-		return new Coordinate(0, LATITUDE_RANGE);
-	}
-	protected static final Coordinate createLatCoordinate(long bitValue) {
-		Coordinate coord = createLatCoordinate();
-		coord.bitValue = bitValue;
-		return coord;
-	}
-	protected static final Coordinate createLonCoordinate() {
-		return new Coordinate(0, LONGITUDE_RANGE);
-	}
-	protected static final Coordinate createLonCoordinate(long bitValue) {
-		Coordinate coord = createLonCoordinate();
-		coord.bitValue = bitValue;
-		return coord;
-	}
-	
-	//Helper data class
 	protected static final class Coordinate {
-		public double coord, min, max, mid;
-		public long bitValue;
-		public Coordinate(final double c, final double[] range) {
-			this.coord = c;
+		protected double coord, min, max, mid;
+		protected int bits;
+		public Coordinate(final double coordinate, final double[] range, final int bits) {
+			this.coord = coordinate;
 			this.min = range[0];
 			this.max = range[1];
 			this.mid = 0.0;
-			this.bitValue = 0;
+			this.bits = bits;
 		}
 	}
 	
