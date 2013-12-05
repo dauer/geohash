@@ -159,13 +159,13 @@ public class GeoHash {
 	}
 	
 	/**
-	 * 
-	 * @param lat
-	 * @param lon
-	 * @param precision Geohash length [1-12]
-	 * @return
+	 * Encodes the coordinate-pair into the hash representation
+	 * @param lat Latitude coordinate
+	 * @param lon Longitude coordinate
+	 * @param precision Geohash length must be in the interval [1-12]
+	 * @return the GeoHash object holding information about the coordinates and hashed values
 	 */
-	public static final GeoHash encode(double lat, double lon, int precision) {
+	public static final GeoHash encode(final double lat, final double lon, int precision) {
 		if (precision < 1) precision = 1;
 		
 		final Coordinate latInfo = new Coordinate(lat, LATITUDE_RANGE, calculateLatitudeBits(precision));
@@ -186,6 +186,13 @@ public class GeoHash {
 		}
 		
 		return new GeoHash(lat, lon, bitValue, translateBinaryToHash(bitValue, precision));//new String(translateBinaryToHash(bitValue, precision));
+	}
+	/**
+	 * See {@link GeoHash#encode(double, double, int)}
+	 * This defaults to the maximal value of precision
+	 */
+	public static final GeoHash encode(final double lat, final double lon) {
+		return encode(lat, lon, MAX_BITS / BITS_PER_CHARACTER);
 	}
 	
 	protected static final long encode(long bitValue, final Coordinate info) {
@@ -221,7 +228,6 @@ public class GeoHash {
 	
 	@Override
 	public String toString() {
-		//convert into a binary string representation
 		return String.format("%f %f %d %s", this.lat, this.lon, this.bitValue, binaryRepresentation(this.bitValue, this.precision));//this.lat + " " + this.lon;
 	}
 	@Override
@@ -229,6 +235,10 @@ public class GeoHash {
 		if (obj != null && obj instanceof GeoHash)
 			return Arrays.equals( ((GeoHash)obj).hash, this.hash );
 		return false;
+	}
+	@Override
+	public int hashCode() {
+		return new String(hash).hashCode();
 	}
 	
 	protected static final class Coordinate {
