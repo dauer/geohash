@@ -1,6 +1,6 @@
 # GeoHash #
 
-Libraries written in Java and Lua contaning methods for encoding and decoding of GeoHashes.
+Libraries written in Java, Lua and PHP contaning methods for encoding and decoding of GeoHashes.
 
 For more info:
 
