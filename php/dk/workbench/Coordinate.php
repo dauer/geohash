@@ -30,7 +30,7 @@ class Coordinate {
      * Implement get methods for class attributes
      *
      * @param string $attr Name of attribute to get
-     * @return string Attribute value
+     * @return double Attribute value
      */
     public function __get($attr) {
         switch($attr) {

@@ -59,7 +59,7 @@ class GeoHash {
      * @param string $coord Containing binary string representation of coordinate
      * @param double $min Minimum range for coordinate
      * @param double $max Maximum range for coordinate
-     * @return double represention coordinate
+     * @return double representing coordinate
      */
     private static function _decode($coord, $min, $max) {
         $mid = 0.0;
