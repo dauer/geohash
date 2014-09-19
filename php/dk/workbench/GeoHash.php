@@ -1,4 +1,7 @@
 <?php
+/**
+ * dk\workbench namespace containing GeoHash class
+ */
 
 namespace dk\workbench;
 
@@ -9,12 +12,17 @@ require_once('Coordinate.php');
  */
 class GeoHash {
 
+
+    /** @const int BITS_PER_CHARACTER Number of bits per character, 32 characters is 5 bits 11111 = 32 */
+    const BITS_PER_CHARACTER = 5;
+
+    /** @var string Contains valid GeoHash characters */
     private static $map = '0123456789bcdefghjkmnpqrstuvwcyz';
 
     /**
      * Decodes a GeoHash hash into a Coordinate set
      *
-     * @param String representing the geohash to decode
+     * @param string $hash representing the geohash to decode
      * @return Coordinate set representing the specified hash
      */
     public static function decode($hash) {
@@ -22,29 +30,37 @@ class GeoHash {
         $bin = self::_binary($hash);
         // Split 'binary' string into latitude and longitude parts
         $coords = self::_split($bin);
-        return new Coordinate(self::_decode($coords['lat'], 90.0, 90.0),
-                              self::_decode($coords['long'], 180.0, 180.0));
+        return new Coordinate(self::_decode($coords['lat'], -90.0, 90.0),
+                              self::_decode($coords['long'], -180.0, 180.0));
     }
 
     /**
      * Encodes a coordinate (latitude, longitude) into a GeoHash string
      *
-     * @param double representing the latitude part of the coordinate set
-     * @param double representing the longitude part of the coordinate set
+     * @param double $latitude representing the latitude part of the coordinate set
+     * @param double $longitude representing the longitude part of the coordinate set
      * @return string containing the GeoHash for the specified coordinates
      */
-    public static function encode($lat, $long) {
+    public static function encode($latitude, $longitude) {
         // Find precision (number of decimals)
-        $digits = self::_decimal($lat, $long);
+        $digits = self::_decimal($latitude, $longitude);
         // Translate coordinates to binary strings
-        $latBinStr = self::_encode($lat, -90.0, 90.0, $digits);
-        $lonBinStr = self::_encode($long, -180.0, 180.0, $digits);
+        $latBinStr = self::_encode($latitude, -90.0, 90.0, $digits);
+        $lonBinStr = self::_encode($longitude, -180.0, 180.0, $digits);
         // Merge the two binary strings
         $binStr = self::_merge($latBinStr, $lonBinStr);
         // Calculate and return Geohash for 'binary' string
         return self::_translate($binStr);
     }
 
+    /**
+     * Converts a binary string into a double
+     *
+     * @param string $coord Containing binary string representation of coordinate
+     * @param double $min Minimum range for coordinate
+     * @param double $max Maximum range for coordinate
+     * @return double represention coordinate
+     */
     private static function _decode($coord, $min, $max) {
         $mid = 0.0;
         $val = 0.0;
@@ -60,10 +76,16 @@ class GeoHash {
             }
         }
         // We want number of decimals according to hash length
-        $val = (double)sprintf("%." . (strlen($coord) / 5) . "f", $val);
+        $val = (double)sprintf("%." . (strlen($coord) / self::BITS_PER_CHARACTER) . "f", $val);
         return $val;
     }
 
+    /**
+     * Converts a hash to a binary string representation
+     *
+     * @param string $hash Hash string to be converted to binary string
+     * @return string Containing binary string
+     */
     private function _binary($hash) {
         $bin = '';
         for($i = 0; $i < strlen($hash); $i++) {
@@ -75,6 +97,14 @@ class GeoHash {
         return $bin;
     }
 
+    /**
+     * Split a binary GeoHash string into array containing two strings, a latitude and a longitude part
+     *
+     * Example: "ABABABABAB" => array('lat' => 'AAAAA', 'long' => 'BBBBB')
+     *
+     * @param string $bin String to split up
+     * @return array containing latitude and longitude part of the specified string
+     */
     private static function _split($bin) {
         $lat = '';
         $lon = '';
@@ -89,6 +119,14 @@ class GeoHash {
         return array('lat' => $lat, 'long' => $lon);
     }
 
+    /**
+     * Find max number of decimals in latitude and longitude doubles
+     *
+     * @param double $lat
+     * @param double $long
+     * @return int length of longest decimal list ex.: 10.246834 = 6
+     *                                                 |______|
+     */
     private static function _decimal($lat, $long) {
         $d1 = strlen(substr($lat, strpos($lat, '.') + 1));
         $d2 = strlen(substr($long, strpos($long, '.') + 1));
@@ -98,11 +136,20 @@ class GeoHash {
         return $d2;
     }
 
+    /**
+     * Encode a part of a coordinate into a binary string representation
+     *
+     * @param double $coord Coordinate part to encode into binary string representation
+     * @param double $min Minimum range for coordinate
+     * @param double $max Maximum range for coordinate
+     * @param int $precision How many digits do we want calculated
+     * @return string containing the encoded GeoHash
+     */
     private static function _encode($coord, $min, $max, $precision) {
         $mid = 0.0;
         $x   = 0.0;
         $y   = 0.0;
-        $p   = ($precision * 5);
+        $p   = ($precision * self::BITS_PER_CHARACTER);
         $result = '';
         for($i = 0; $i < $p; $i++) {
             if($coord <= $max && $coord >= $mid) {
@@ -121,7 +168,15 @@ class GeoHash {
         return $result;
     }
 
-   private static function _merge($latbin, $longbin) {
+    /**
+     * Merge two strings into one
+     * Example: merge("AAAAA", "BBBBB") => "ABABABABAB"
+     *
+     * @param string $latbin First string to merge
+     * @param string $longbin Second string to merge
+     * @return string The merged string
+     */
+    private static function _merge($latbin, $longbin) {
         $res = '';
         for($i = 0; $i < strlen($latbin); $i++) {
             $res .= substr($longbin, $i, 1) . substr($latbin, $i, 1);
@@ -129,10 +184,16 @@ class GeoHash {
         return $res;
     }
 
+    /**
+     * Translate binary string into GeoHash string
+     *
+     * @param string $binstr Binary string to be converted into GeoHash string
+     * @return string Containing translated GeoHash
+     */
     private static function _translate($binstr) {
         $hash = '';
-        for($i = 0; $i < strlen($binstr); $i += 5) {
-            $pos = bindec(substr($binstr, $i, 5));
+        for($i = 0; $i < strlen($binstr); $i += self::BITS_PER_CHARACTER) {
+            $pos = bindec(substr($binstr, $i, self::BITS_PER_CHARACTER));
             $hash .= substr(self::$map, $pos, 1);
         }
         return $hash;
