@@ -5,7 +5,7 @@
 
 namespace dk\workbench\geohash;
 
-require_once('Coordinate.php');
+require_once('GeoHash/Coordinate.php');
 require_once('GeoHash/StringUtils.php');
 
 /**

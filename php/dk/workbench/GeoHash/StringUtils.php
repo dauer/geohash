@@ -1,4 +1,7 @@
 <?php
+/**
+ * GeoHash String Utils class
+ */
 
 namespace dk\workbench\geohash;
 
