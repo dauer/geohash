@@ -3,7 +3,7 @@
  * dk\workbench namespace containing Coordinate class
  */
 
-namespace dk\workbench;
+namespace dk\workbench\geohash;
 
 /**
  * A simple class for representing a coordinate point (latitude, longitude)

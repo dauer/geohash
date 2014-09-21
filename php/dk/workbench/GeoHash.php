@@ -3,9 +3,10 @@
  * dk\workbench namespace containing GeoHash class
  */
 
-namespace dk\workbench;
+namespace dk\workbench\geohash;
 
 require_once('Coordinate.php');
+require_once('GeoHash/StringUtils.php');
 
 /**
  * A class for decoding and encoding GeoHashes
@@ -29,9 +30,9 @@ class GeoHash {
         // Convert hash into 'binary' string
         $bin = self::_binary($hash);
         // Split 'binary' string into latitude and longitude parts
-        $coords = self::_split($bin);
-        return new Coordinate(self::_decode($coords['lat'], -90.0, 90.0),
-                              self::_decode($coords['long'], -180.0, 180.0));
+        $coords = split($bin);
+        return new Coordinate(self::_decode($coords['even'], -90.0, 90.0),
+                              self::_decode($coords['odd'], -180.0, 180.0));
     }
 
     /**
@@ -48,7 +49,7 @@ class GeoHash {
         $latBinStr = self::_encode($latitude, -90.0, 90.0, $digits);
         $lonBinStr = self::_encode($longitude, -180.0, 180.0, $digits);
         // Merge the two binary strings
-        $binStr = self::_merge($latBinStr, $lonBinStr);
+        $binStr = merge($latBinStr, $lonBinStr);
         // Calculate and return Geohash for 'binary' string
         return self::_translate($binStr);
     }
@@ -98,34 +99,12 @@ class GeoHash {
     }
 
     /**
-     * Split a binary GeoHash string into array containing two strings, a latitude and a longitude part
-     *
-     * Example: "ABABABABAB" => array('lat' => 'AAAAA', 'long' => 'BBBBB')
-     *
-     * @param string $bin String to split up
-     * @return array containing latitude and longitude part of the specified string
-     */
-    private static function _split($bin) {
-        $lat = '';
-        $lon = '';
-        for($i = 0; $i < strlen($bin); $i++) {
-            $c = substr($bin, $i, 1);
-            if($i % 2 == 0) {
-                $lon .= $c;
-            } else {
-                $lat .= $c;
-            }
-        }
-        return array('lat' => $lat, 'long' => $lon);
-    }
-
-    /**
      * Find max number of decimals in latitude and longitude doubles
      *
      * @param double $lat
      * @param double $long
      * @return int length of longest decimal list ex.: 10.246834 = 6
-     *                                                 |______|
+     *                                                   |______|
      */
     private static function _decimal($lat, $long) {
         $d1 = strlen(substr($lat, strpos($lat, '.') + 1));
@@ -166,22 +145,6 @@ class GeoHash {
             $max = $y;
         }
         return $result;
-    }
-
-    /**
-     * Merge two strings into one
-     * Example: merge("AAAAA", "BBBBB") => "ABABABABAB"
-     *
-     * @param string $latbin First string to merge
-     * @param string $longbin Second string to merge
-     * @return string The merged string
-     */
-    private static function _merge($latbin, $longbin) {
-        $res = '';
-        for($i = 0; $i < strlen($latbin); $i++) {
-            $res .= substr($longbin, $i, 1) . substr($latbin, $i, 1);
-        }
-        return $res;
     }
 
     /**

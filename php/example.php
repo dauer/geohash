@@ -2,7 +2,7 @@
 
 require_once('dk/workbench/GeoHash.php');
 
-use \dk\workbench\GeoHash as GeoHash;
+use \dk\workbench\geohash\GeoHash as GeoHash;
 
 $hash = GeoHash::encode(45.081046, 38.564758);
 echo $hash . "\n";
