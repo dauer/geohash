@@ -1,6 +1,6 @@
 <?php
 /**
- * GeoHash String Utils class
+ * GeoHash String Util functions
  */
 
 namespace dk\workbench\geohash;
