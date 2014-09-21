@@ -17,8 +17,8 @@ class GeoHash {
     /** @const int BITS_PER_CHARACTER Number of bits per character, 32 characters is 5 bits 11111 = 32 */
     const BITS_PER_CHARACTER = 5;
 
-    /** @var string Contains valid GeoHash characters */
-    private static $map = '0123456789bcdefghjkmnpqrstuvwcyz';
+    /** @const string MAP Contains valid GeoHash characters */
+    const MAP = '0123456789bcdefghjkmnpqrstuvwcyz';
 
     /**
      * Decodes a GeoHash hash into a Coordinate set
@@ -90,7 +90,7 @@ class GeoHash {
     private function _binary($hash) {
         $bin = '';
         for($i = 0; $i < strlen($hash); $i++) {
-            $pos = strpos(self::$map, $hash[$i]);
+            $pos = strpos(self::MAP, $hash[$i]);
             if($pos !== false) {
                 $bin .= sprintf("%05s", decbin($pos));
             }
@@ -157,7 +157,7 @@ class GeoHash {
         $hash = '';
         for($i = 0; $i < strlen($binstr); $i += self::BITS_PER_CHARACTER) {
             $pos = bindec(substr($binstr, $i, self::BITS_PER_CHARACTER));
-            $hash .= substr(self::$map, $pos, 1);
+            $hash .= substr(self::MAP, $pos, 1);
         }
         return $hash;
     }
