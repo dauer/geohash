@@ -117,6 +117,13 @@ public class GeoHash {
         return (((precision >> 1) * BITS_PER_CHARACTER) + ((precision & 0x1) * unevenExtra));
     }
 
+    /**
+     * Extracts the even bits, starting with index 1
+     * Example: 
+     * 00010110 = 0x16
+     *  | | | |
+     *  0 1 1 0 = 0x06
+     */
     protected static final int extractEvenBits(int value, final byte b) {
         value <<= 3;
         value |= ((b & 0x10) >> 2);
@@ -125,6 +132,13 @@ public class GeoHash {
         return value;
     }
 
+    /**
+     * Extracts the uneven bits, starting with index 0
+     * Example: 
+     * 00010110 = 0x16
+     * | | | |
+     * 0 0 0 1 = 0x01
+     */
     protected static final int extractUnevenBits(int value, final byte b) {
         value <<= 2;
         value |= ((b & 0x08) >> 2);
