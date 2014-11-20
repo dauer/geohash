@@ -53,23 +53,27 @@ public class GeoHashTest {
 
     @Test
     public void extractEvenBits() {
-        // 'Even' starts from the left of the binary representation with 0 as
+        // 'Even' starts from the left of the binary representation with 1 as
         // startindex
         // 00010110 = 0x16
-        // 110 = 0x06
+        //  | | | |
+        //  0 1 1 0 = 0x06
         assertEquals(0x06, GeoHash.extractEvenBits(0, (byte) 0x16));
         // 00001111 = 0xF
-        // 011 = 3
+        //  | | | |
+        //  0 0 1 1 = 3
         assertEquals(0x03, GeoHash.extractEvenBits(0, (byte) 0xF));
     }
 
     @Test
     public void extractUnevenBits() {
         // 00010110 = 0x16
-        // 01 = 0x01
+        // | | | |
+        // 0 0 0 1 = 0x01
         assertEquals(0x01, GeoHash.extractUnevenBits(0, (byte) 0x16));
         // 00001111 = 0xF
-        // 11 = 3
+        // | | | |
+        // 0 0 1 1 = 3
         assertEquals(0x03, GeoHash.extractUnevenBits(0, (byte) 0xF));
     }
 
